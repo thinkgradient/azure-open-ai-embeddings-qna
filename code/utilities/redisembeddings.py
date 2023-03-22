@@ -125,6 +125,8 @@ def get_prompt_results(number_of_results: int=VECT_NUMBER):
         return pd.DataFrame()
 
 def delete_prompt_results(prefix="prompt*"):
+    redis_conn = Redis(host= os.environ.get('REDIS_ADDRESS','localhost'), port=6379, password=os.environ.get('REDIS_PASSWORD',None)) 
+
     keys = redis_conn.keys(prefix)
     if keys:
         redis_conn.delete(*keys)
