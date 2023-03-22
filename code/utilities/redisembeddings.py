@@ -21,6 +21,7 @@ VECT_NUMBER = 3155
 def create_index(redis_conn: Redis, index_name="embeddings-index", prefix = "embedding",number_of_vectors = VECT_NUMBER, distance_metric:str="COSINE"):
     text = TextField(name="text")
     filename = TextField(name="filename")
+
     embeddings = VectorField("embeddings",
                 "HNSW", {
                     "TYPE": "FLOAT32",
@@ -36,6 +37,8 @@ def create_index(redis_conn: Redis, index_name="embeddings-index", prefix = "emb
 
 def execute_query(np_vector:np.array, return_fields: list=[], search_type: str="KNN", number_of_results: int=20, vector_field_name: str="embeddings"):
     base_query = f'*=>[{search_type} {number_of_results} @{vector_field_name} $vec_param AS vector_score]'
+    redis_conn = Redis(host= os.environ.get('REDIS_ADDRESS','localhost'), port=6379, password=os.environ.get('REDIS_PASSWORD',None)) 
+    
     query = Query(base_query)\
         .sort_by("vector_score")\
         .paging(0, number_of_results)\
@@ -50,6 +53,8 @@ def execute_query(np_vector:np.array, return_fields: list=[], search_type: str="
 def get_documents(number_of_results: int=VECT_NUMBER):
     base_query = f'*'
     return_fields = ['id','text','filename']
+    redis_conn = Redis(host= os.environ.get('REDIS_ADDRESS','localhost'), port=6379, password=os.environ.get('REDIS_PASSWORD',None)) 
+    
     query = Query(base_query)\
         .paging(0, number_of_results)\
         .return_fields(*return_fields)\
@@ -76,9 +81,13 @@ def set_document(elem):
     )
 
 def delete_document(index):
+    redis_conn = Redis(host= os.environ.get('REDIS_ADDRESS','localhost'), port=6379, password=os.environ.get('REDIS_PASSWORD',None)) 
+
     redis_conn.delete(f"{index}")
 
 def create_prompt_index(redis_conn: Redis, index_name="prompt-index", prefix = "prompt"):
+    redis_conn = Redis(host= os.environ.get('REDIS_ADDRESS','localhost'), port=6379, password=os.environ.get('REDIS_PASSWORD',None)) 
+    
     result = TextField(name="result")
     filename = TextField(name="filename")
     prompt = TextField(name="prompt")
@@ -89,6 +98,8 @@ def create_prompt_index(redis_conn: Redis, index_name="prompt-index", prefix = "
     )
 
 def add_prompt_result(id, result, filename="", prompt=""):
+    redis_conn = Redis(host= os.environ.get('REDIS_ADDRESS','localhost'), port=6379, password=os.environ.get('REDIS_PASSWORD',None)) 
+    
     redis_conn.hset(
         f"prompt:{id}",
         mapping={
@@ -101,6 +112,8 @@ def add_prompt_result(id, result, filename="", prompt=""):
 def get_prompt_results(number_of_results: int=VECT_NUMBER):
     base_query = f'*'
     return_fields = ['id','result','filename','prompt']
+    redis_conn = Redis(host= os.environ.get('REDIS_ADDRESS','localhost'), port=6379, password=os.environ.get('REDIS_PASSWORD',None)) 
+    
     query = Query(base_query)\
         .paging(0, number_of_results)\
         .return_fields(*return_fields)\
